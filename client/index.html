@@ -1,0 +1,75 @@
+<html ng-app="apis_app">
+<head>
+  <title>1955 APIs</title>
+
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+  <script>
+  	var apis_app = angular.module('apis_app', []);
+
+	apis_app.factory('NameFactory', function($http) {
+
+    	var factory = {};
+    	var names = [];
+
+    factory.getNames = function(callback) {
+      $http.get('/names').success(function(output) {
+        names = output;
+        callback(names);
+      }) 
+    }
+
+  factory.createName = function(name,callback) {
+  	console.log(name.first)
+    $http.post('/create', name).success(function(output) {
+
+        callback();
+      }) 
+     }
+
+   factory.destroyName = function(index,callback) {
+    $http.post('/destroy/'+names[index]._id).success(function(output) {
+      console.log("after http request")
+        callback();
+      }) 
+     }
+  return factory;
+});
+  apis_app.controller('NamesController', function($scope, NameFactory) {
+    $scope.names = []
+    NameFactory.getNames(function(data){
+      $scope.names = data;
+    })
+
+  $scope.addname = function(data) {
+    NameFactory.createName($scope.newName, function(data){
+    	NameFactory.getNames(function(data){
+        $scope.newName = {}
+        $scope.names = data
+      })
+    })
+  }
+  $scope.removename = function(index) {
+    NameFactory.destroyName(index, function(data){
+      NameFactory.getNames(function(data){
+        $scope.names = data
+      })
+    })
+  }
+})
+  </script>
+</head>
+<!-- everything in the body is going to use the friends controller (this gives us access to the friends controller $scope) -->
+<body ng-controller="NamesController">
+  <h1>1955 Dashboard</h1>
+  <h1>Add people who were born in 1955!</h1>
+  <!-- objects and properties nothing scary -->
+  <input type="text" ng-model="newName.first" placeholder="name">
+  <input type="submit" ng-click="addname()">
+   <ul>
+    <li ng-repeat="name in names| filter: filter_first">
+      {{name.first}}
+       <button ng-click='removename($index)' >Delete</button>
+    </li>
+  </ul>
+</body>
+</html>
